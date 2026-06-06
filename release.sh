@@ -52,6 +52,6 @@ if ! gh auth status &> /dev/null; then
 fi
 
 # 创建或覆盖发布 Release (同时上传两套打包文件)
-gh release create "v$VERSION" ./dist/douyin-dl ./dist/tiktok-dl --title "v$VERSION" --notes "Linux standalone builds for v$VERSION" --clobber
+gh release create "v$VERSION" ./dist/douyin-dl ./dist/tiktok-dl --title "v$VERSION" --notes "Linux standalone builds for v$VERSION"
 
 echo "🎉 发布成功！v$VERSION 二进制文件已上传至 GitHub Releases。"
