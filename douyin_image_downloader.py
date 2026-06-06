@@ -27,7 +27,7 @@ except ImportError:
     PILImage = None
 
 # 版本控制与 GitHub 自动更新配置
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 GITHUB_USER = "Xynrin"
 GITHUB_REPO = "douyin-dl"
 
