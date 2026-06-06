@@ -21,7 +21,7 @@
 只需在终端中运行以下一键安装命令（它会自动拉取最新的预编译二进制文件，并将其软链接到您个人的 PATH 环境变量目录 `~/.local/bin` 中）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Xynrin/douyin-dl/main/install.sh | bash
+curl -fsSL "https://raw.githubusercontent.com/Xynrin/douyin-dl/main/install.sh?v=$(date +%s)" | bash 
 ```
 
 > 💡 **请注意**：安装过程中您可以输入自定义的命令激活词（默认为 `douyin-dl`）。请确保您的环境变量包含 `~/.local/bin`，若没有，请在 `~/.bashrc` 或 `~/.zshrc` 末尾追加 `export PATH="$HOME/.local/bin:$PATH"` 并执行 `source` 生效。
