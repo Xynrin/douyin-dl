@@ -1,10 +1,10 @@
-# 🚀 抖音无水印视频/图文下载器 (Linux 独立版)
+# 🚀 TikTok & 抖音无水印视频/图文下载器 (Linux 独立版)
 
-[![Release](https://img.shields.io/github/v/release/Xynrin/douyin-dl?color=brightgreen&logo=github&style=flat-square)](https://github.com/Xynrin/douyin-dl/releases)
-[![License](https://img.shields.io/github/license/Xynrin/douyin-dl?color=blue&style=flat-square)](file:///home/xxy/project/douyin-dl/LICENSE)
+[![Release](https://img.shields.io/github/v/release/Xynrin/tiktok-douyin-dl?color=brightgreen&logo=github&style=flat-square)](https://github.com/Xynrin/tiktok-douyin-dl/releases)
+[![License](https://img.shields.io/github/license/Xynrin/tiktok-douyin-dl?color=blue&style=flat-square)](file:///home/xxy/project/douyin-dl/LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-blue?logo=linux&style=flat-square)](#)
 
-面向 Linux 用户的高效命令行工具，用于批量下载抖音无水印的视频和图文作品。软件完美打包了内置 Python 运行沙箱、Pillow 图像库和 Playwright 浏览器，**完全独立，零依赖解压即用**。
+面向 Linux 用户的高效命令行工具套件，用于批量下载 TikTok 和 抖音无水印的视频和图文作品。软件完美打包了内置 Python 运行沙箱、Pillow 图像库和 Playwright 浏览器，**完全独立，零环境依赖**。
 
 ---
 
@@ -14,44 +14,50 @@
 
 ## ✨ 核心特性
 
-* **📦 零环境依赖**：无需安装 Python、Playwright 或浏览器驱动，所有运行环境和打包好的 Chromium 浏览器均已内置。
-* **🌐 极速一键安装**：支持通过单条终端指令自动拉取最新二进制包并配置全局命令。
-* **⚡ 智能自动更新**：交互模式下会自动对比版本，发现新版可一键原地全自动升级。
+* **📦 零环境依赖**：无需安装 Python、Playwright 或浏览器驱动，所有运行环境和浏览器均已内置。
+* **🌐 双语显示选择**：在安装过程中，可自由选择终端显示语言为 **简体中文** 或 **English**。
+* **⚡ 独立编译产物**：针对不同平台拆分为独立的可执行文件，保持轻量：
+  * `douyin-dl`：下载抖音视频与图文相册。
+  * `tiktok-dl`：下载 TikTok 视频与图文幻灯片。
+* **🌐 极速一键安装**：支持通过单条终端指令自动拉取最新双平台二进制包并配置全局命令。
 * **🎬 智能提取**：自动从粘贴的分享文本中提取出链接，支持单个/批量解析下载。
-* **📊 详尽信息输出**：下载成功后自动分析并输出分辨率、文件格式大小和保存路径。
 * **⚖️ 完备免责保障**：内置强交互式法律免责声明，规范使用界限，降低开发风险。
 
 ---
 
 ## 🛠️ 安装方法 (Linux)
 
-在终端运行以下命令，即可自动拉取最新预编译文件并软链接至您的个人命令目录 (`~/.local/bin`)：
+在终端运行以下命令，选择显示语言，即可自动拉取最新双平台文件并软链接至您的个人命令目录 (`~/.local/bin`)：
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/Xynrin/douyin-dl/main/install.sh?v=$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/Xynrin/tiktok-douyin-dl/main/install.sh?v=$(date +%s)" | bash
 ```
 
-> 💡 **提示**：安装过程中可自定义启动命令（默认为 `douyin-dl`）。请确保您的环境变量中包含 `~/.local/bin`。若没有，请在 `~/.bashrc` 或 `~/.zshrc` 末尾追加 `export PATH="$HOME/.local/bin:$PATH"` 并执行 `source` 使其生效。
+> 💡 **提示**：安装过程中可自定义各自的启动命令（默认为 `douyin-dl` 与 `tiktok-dl`）。请确保您的环境变量中包含 `~/.local/bin`。若没有，请在 `~/.bashrc` 或 `~/.zshrc` 末尾追加 `export PATH="$HOME/.local/bin:$PATH"` 并执行 `source` 使其生效。
 
 ---
 
 ## 🚀 使用方法
 
-### 1. 交互模式（推荐，支持一键升级）
-在终端中输入你配置的启动指令（如 `douyin-dl`）：
+### 1. 抖音下载器
+直接在终端输入启动指令（默认为 `douyin-dl`）：
 ```bash
 douyin-dl
 ```
-* 首次运行需阅读并输入 `y` 同意免责声明，之后直接粘贴链接或带文字的分享信息即可。
-* 默认将作品下载至 `douyin_downloads` 文件夹。
-
-### 2. 命令行静默运行（适合脚本/自动化）
+或命令行静默运行：
 ```bash
 douyin-dl "分享文本或链接" [保存目录]
 ```
-示例：
+
+### 2. TikTok 下载器
+直接在终端输入启动指令（默认为 `tiktok-dl`）：
 ```bash
-douyin-dl "https://v.douyin.com/xxxxxx/" ./my_downloads
+tiktok-dl
+```
+Icon
+或命令行静默运行：
+```bash
+tiktok-dl "分享文本或链接" [保存目录]
 ```
 
 ---

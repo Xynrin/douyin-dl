@@ -1,10 +1,10 @@
-# 🚀 Douyin Media Downloader (Linux Standalone)
+# 🚀 TikTok & Douyin Media Downloader (Linux Standalone)
 
-[![Release](https://img.shields.io/github/v/release/Xynrin/douyin-dl?color=brightgreen&logo=github&style=flat-square)](https://github.com/Xynrin/douyin-dl/releases)
-[![License](https://img.shields.io/github/license/Xynrin/douyin-dl?color=blue&style=flat-square)](file:///home/xxy/project/douyin-dl/LICENSE)
+[![Release](https://img.shields.io/github/v/release/Xynrin/tiktok-douyin-dl?color=brightgreen&logo=github&style=flat-square)](https://github.com/Xynrin/tiktok-douyin-dl/releases)
+[![License](https://img.shields.io/github/license/Xynrin/tiktok-douyin-dl?color=blue&style=flat-square)](file:///home/xxy/project/douyin-dl/LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-blue?logo=linux&style=flat-square)](#)
 
-A high-speed, zero-dependency command-line utility for downloading Douyin videos and images without watermarks on Linux. Packaged with a built-in Python environment, Pillow image analysis library, and Playwright Chromium runtime, it runs fully standalone out of the box.
+A high-speed, zero-dependency command-line utility suite for downloading TikTok and Douyin videos and images without watermarks on Linux. Packaged with a built-in Python environment, Pillow image analysis library, and Playwright Chromium runtime, both tools run fully standalone out of the box.
 
 ---
 
@@ -14,44 +14,49 @@ A high-speed, zero-dependency command-line utility for downloading Douyin videos
 
 ## ✨ Features
 
-* **📦 Zero Dependencies**: No need to install Python, Playwright, or configure browser drivers. Everything is packaged in a single standalone binary.
-* **🌐 One-Click Installation**: Install and configure the terminal shortcut with a single command.
-* **⚡ Smart Auto-Updates**: Prompts to check and update itself to the latest version dynamically when run in interactive mode.
-* **🎬 Auto-Detection**: Extracts sharing text automatically, supports downloading single items or in batch (images & videos).
-* **📊 Detailed Logs**: Outputs resolutions, formats, and download statuses cleanly.
-* **⚖️ Built-in Disclaimer**: Includes a rigorous legal disclaimer to protect rights and define appropriate educational boundaries.
+* **📦 Zero Dependencies**: No need to install Python, Playwright, or configure browser drivers. Everything is packaged in standalone binaries.
+* **🌐 Multilingual Setup**: Choose between **English** and **简体中文** during installation.
+* **⚡ Standalone Binaries**: Separate binaries for both platforms:
+  * `douyin-dl`: For Douyin videos and photo carousels.
+  * `tiktok-dl`: For TikTok videos and photo slideshows.
+* **🌐 One-Click Installation**: Installs and configures terminal shortcuts for both tools automatically.
+* **🎬 Auto-Detection**: Extracts links from sharing texts, supports single items and batch downloads.
+* **⚖️ Built-in Disclaimer**: Protects developer rights and defines educational usage limits.
 
 ---
 
 ## 🛠️ Installation (Linux)
 
-Run the following command in your terminal to fetch the latest pre-compiled binary and add it to your path (`~/.local/bin`):
+Run the following command in your terminal to select your language and install both tools to your path (`~/.local/bin`):
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/Xynrin/douyin-dl/main/install.sh?v=$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/Xynrin/tiktok-douyin-dl/main/install.sh?v=$(date +%s)" | bash
 ```
 
-> 💡 **Tip**: During installation, you can configure your custom command alias (defaults to `douyin-dl`). Please ensure `~/.local/bin` is in your environment `$PATH`. If not, add `export PATH="$HOME/.local/bin:$PATH"` to your `~/.bashrc` or `~/.zshrc` and run `source`.
+> 💡 **Tip**: During installation, you will select your display language (English or Chinese) and can customize the command aliases. Please ensure `~/.local/bin` is in your environment `$PATH`. If not, add `export PATH="$HOME/.local/bin:$PATH"` to your `~/.bashrc` or `~/.zshrc` and run `source`.
 
 ---
 
 ## 🚀 Usage
 
-### 1. Interactive Mode (Recommended)
-Launch the tool by typing your configured command alias (default: `douyin-dl`):
+### 1. Douyin Downloader
+Launch the Douyin downloader (default: `douyin-dl`):
 ```bash
 douyin-dl
 ```
-* Read the disclaimer, type `y` to accept, and paste your Douyin links or sharing texts.
-* Files will be downloaded to `douyin_downloads` (or your custom directory).
-
-### 2. Silent CLI Mode (Ideal for scripts)
+Or quiet command line mode:
 ```bash
 douyin-dl "Sharing Text or URL" [Output Directory]
 ```
-Example:
+
+### 2. TikTok Downloader
+Launch the TikTok downloader (default: `tiktok-dl`):
 ```bash
-douyin-dl "https://v.douyin.com/xxxxxx/" ./my_downloads
+tiktok-dl
+```
+Or quiet command line mode:
+```bash
+tiktok-dl "Sharing Text or URL" [Output Directory]
 ```
 
 ---
