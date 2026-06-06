@@ -7,26 +7,33 @@ VERSION=$(./.venv/bin/python -c "import douyin_image_downloader; print(douyin_im
 echo "📦 开始本地打包并发布版本: v$VERSION ..."
 
 # 2. 运行 PyInstaller 编译两套独立软件
-# 创建临时目录，复制 Playwright 驱动并排除浏览器文件以减小体积（从 370MB 减小到 ~50MB）
-echo "📦 正在准备 Playwright 驱动 (排除浏览器以减小体积)..."
-rm -rf playwright_driver_dist
-cp -r .venv/lib/python3.14/site-packages/playwright/driver playwright_driver_dist
-rm -rf playwright_driver_dist/package/.local-browsers
-
 echo "🔨 正在编译 抖音下载器 (douyin-dl) ..."
-rm -rf build
-./.venv/bin/python -m PyInstaller --onefile --clean --name=douyin-dl \
-  --add-data "playwright_driver_dist:playwright/driver" \
+rm -rf build dist/douyin-dl
+# 2.1 生成 spec 文件并用 Python 修改，排除 playwright-local-browsers 以极大地减小打包体积
+./.venv/bin/python ./.venv/bin/pyi-makespec --onefile --name=douyin-dl \
+  --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
   douyin_image_downloader.py
 
+./.venv/bin/python -c 'import sys; f_path=sys.argv[1]; c=open(f_path).read(); open(f_path,"w").write(c.replace("pyz = PYZ(a.pure)", "a.datas = [x for x in a.datas if \"local-browsers\" not in x[0] and \"local-browsers\" not in x[1]]\na.binaries = [x for x in a.binaries if \"local-browsers\" not in x[0] and \"local-browsers\" not in x[1]]\npyz = PYZ(a.pure)"))' douyin-dl.spec
+
+# 2.2 使用修改后的 spec 文件进行编译
+./.venv/bin/python -m PyInstaller --clean douyin-dl.spec
+
 echo "🔨 正在编译 TikTok 下载器 (tiktok-dl) ..."
-rm -rf build
-./.venv/bin/python -m PyInstaller --onefile --clean --name=tiktok-dl \
-  --add-data "playwright_driver_dist:playwright/driver" \
+rm -rf build dist/tiktok-dl
+# 2.3 生成 spec 文件并用 Python 修改，排除 playwright-local-browsers 以极大地减小打包体积
+./.venv/bin/python ./.venv/bin/pyi-makespec --onefile --name=tiktok-dl \
+  --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
   tiktok_downloader.py
 
-# 清理临时目录
-rm -rf playwright_driver_dist
+./.venv/bin/python -c 'import sys; f_path=sys.argv[1]; c=open(f_path).read(); open(f_path,"w").write(c.replace("pyz = PYZ(a.pure)", "a.datas = [x for x in a.datas if \"local-browsers\" not in x[0] and \"local-browsers\" not in x[1]]\na.binaries = [x for x in a.binaries if \"local-browsers\" not in x[0] and \"local-browsers\" not in x[1]]\npyz = PYZ(a.pure)"))' tiktok-dl.spec
+
+# 2.4 使用修改后的 spec 文件进行编译
+./.venv/bin/python -m PyInstaller --clean tiktok-dl.spec
+
+# 清理临时文件
+rm -f douyin-dl.spec tiktok-dl.spec
+rm -rf build
 
 
 # 3. 提交 .gitignore 等其他非源码文件的修改，并推送 Tag
@@ -42,6 +49,12 @@ if git rev-parse "v$VERSION" >/dev/null 2>&1; then
     echo "⚠️ 检测到本地已存在 Tag v$VERSION，正在重置..."
     git tag -d "v$VERSION"
     git push origin --delete "v$VERSION" || true
+fi
+
+# 同时也尝试在 GitHub 上删除同名的 Release（如果存在，防止覆盖发布失败）
+if command -v gh &> /dev/null && gh auth status &> /dev/null; then
+    echo "🧹 正在清理 GitHub 上已有的 Release v$VERSION ..."
+    gh release delete "v$VERSION" -y || true
 fi
 
 git tag "v$VERSION"
