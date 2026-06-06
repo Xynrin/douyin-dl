@@ -15,6 +15,16 @@
 
 import sys
 import os
+
+# 修复 PyInstaller 打包环境中子进程（如 Playwright 启动的浏览器）因为 LD_LIBRARY_PATH 污染而崩溃的问题
+if getattr(sys, 'frozen', False):
+    for key in ['LD_LIBRARY_PATH', 'LIBPATH', 'DYLD_LIBRARY_PATH']:
+        orig_key = key + '_ORIG'
+        if orig_key in os.environ:
+            os.environ[key] = os.environ[orig_key]
+        else:
+            os.environ.pop(key, None)
+
 import re
 import time
 import urllib.request
@@ -34,7 +44,7 @@ except ImportError:
     PILImage = None
 
 # 版本控制与 GitHub 自动更新配置
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 GITHUB_USER = "Xynrin"
 GITHUB_REPO = "douyin-dl"
 
