@@ -27,3 +27,10 @@ EOF
 # 核心
 douyin_image_downloader.py
 tiktok_downloader.py
+
+# Temp and scratch files
+scratch/
+*.html
+*.json
+*.js
+
