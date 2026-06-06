@@ -50,6 +50,15 @@ def check_for_updates(silent=False):
             # 简单的版本对比（如果不同则提示更新）
             if latest_version and latest_version != VERSION:
                 print(f"\n✨ 发现新版本: v{latest_version} (当前版本: v{VERSION})")
+                
+                # 获取并展示更新日志 (Changelog)
+                changelog = data.get("body", "").strip()
+                if changelog:
+                    print("\n📝 更新日志 / Changelog:")
+                    print("─" * 50)
+                    print(changelog)
+                    print("─" * 50)
+
                 assets = data.get("assets", [])
                 download_url = ""
                 for asset in assets:
@@ -59,7 +68,7 @@ def check_for_updates(silent=False):
                 
                 if download_url:
                     if not silent:
-                        confirm = input("👉 是否立即自动下载并升级为最新版本？(y/n): ").strip().lower()
+                        confirm = input("\n👉 是否立即自动下载并升级为最新版本？(y/n): ").strip().lower()
                         if confirm in ['y', 'yes']:
                             perform_self_update(download_url)
                     else:
