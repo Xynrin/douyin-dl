@@ -8,11 +8,13 @@ echo "📦 开始本地打包并发布版本: v$VERSION ..."
 
 # 2. 运行 PyInstaller 编译两套独立软件
 echo "🔨 正在编译 抖音下载器 (douyin-dl) ..."
+rm -rf build
 ./.venv/bin/python -m PyInstaller --onefile --clean --name=douyin-dl \
   --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
   douyin_image_downloader.py
 
 echo "🔨 正在编译 TikTok 下载器 (tiktok-dl) ..."
+rm -rf build
 ./.venv/bin/python -m PyInstaller --onefile --clean --name=tiktok-dl \
   --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
   tiktok_downloader.py
