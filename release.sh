@@ -2,14 +2,20 @@
 # 遇到错误立即退出
 set -e
 
-# 1. 从 Python 脚本中自动读取当前版本号
+# 1. 从 Python 脚本中自动读取当前版本号 (使用 douyin_image_downloader 的版本作为整体发布版本号)
 VERSION=$(./.venv/bin/python -c "import douyin_image_downloader; print(douyin_image_downloader.VERSION)")
 echo "📦 开始本地打包并发布版本: v$VERSION ..."
 
-# 2. 运行 PyInstaller 编译
+# 2. 运行 PyInstaller 编译两套独立软件
+echo "🔨 正在编译 抖音下载器 (douyin-dl) ..."
 ./.venv/bin/python -m PyInstaller --onefile --clean --name=douyin-dl \
   --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
   douyin_image_downloader.py
+
+echo "🔨 正在编译 TikTok 下载器 (tiktok-dl) ..."
+./.venv/bin/python -m PyInstaller --onefile --clean --name=tiktok-dl \
+  --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
+  tiktok_downloader.py
 
 # 3. 提交 .gitignore 等其他非源码文件的修改，并推送 Tag
 git add .
@@ -45,7 +51,7 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-# 创建或覆盖发布 Release
-gh release create "v$VERSION" ./dist/douyin-dl --title "v$VERSION" --notes "Linux 预编译版本 v$VERSION" --clobber
+# 创建或覆盖发布 Release (同时上传两套打包文件)
+gh release create "v$VERSION" ./dist/douyin-dl ./dist/tiktok-dl --title "v$VERSION" --notes "Linux standalone builds for v$VERSION" --clobber
 
 echo "🎉 发布成功！v$VERSION 二进制文件已上传至 GitHub Releases。"

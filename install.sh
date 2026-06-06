@@ -1,126 +1,188 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
-# 抖音图文/视频无水印下载器 - Linux 一键安装与配置脚本 (支持 GitHub 极速下载)
+# TikTok & Douyin Downloader - Linux One-Click Installer
 # -----------------------------------------------------------------------------
 
 set -e
 
-# GitHub 仓库配置
+# GitHub Repository Configuration
 GITHUB_USER="Xynrin"
-GITHUB_REPO="douyin-dl"
+GITHUB_REPO="tiktok-douyin-dl"
 
-INSTALL_DIR="$HOME/.local/share/douyin-downloader"
+INSTALL_DIR="$HOME/.local/share/tiktok-douyin-dl"
 BIN_DIR="$HOME/.local/bin"
 
-# 终端颜色定义
+# Terminal Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # 无颜色
+NC='\033[0m' # No Color
 
-echo -e "${BLUE}================================──────────────────${NC}"
-echo -e "${BLUE}       🚀 抖音图文 / 视频下载器一键安装程序         ${NC}"
-echo -e "${BLUE}================================──────────────────${NC}"
+echo -e "${BLUE}==================================================${NC}"
+echo -e "${BLUE}   🚀 TikTok & Douyin Downloader Installer        ${NC}"
+echo -e "${BLUE}==================================================${NC}"
 
-# 创建目录
+# Create directories
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$BIN_DIR"
 
-# 1. 确定安装文件来源
-if [ -f "dist/douyin-dl" ]; then
-    # 优先安装本地已编译的文件
-    echo -e "📦 检测到本地已编译好的二进制文件，正在直接本地安装..."
-    cp "dist/douyin-dl" "$INSTALL_DIR/"
+# 1. Choose Language
+echo -e "\n${YELLOW}🌐 选择语言 / Choose Language：${NC}"
+echo "1. 简体中文 (Chinese)"
+echo "2. English"
+read -p "请输入选项序号 / Enter option number [1-2] (Default: 1): " LANG_OPT < /dev/tty
+if [ "$LANG_OPT" = "2" ]; then
+    USER_LANG="en"
+    echo -e "✓ Language set to English."
 else
-    # 检查配置
-    if [ "$GITHUB_USER" = "YOUR_GITHUB_USERNAME" ] || [ "$GITHUB_REPO" = "YOUR_GITHUB_REPO" ]; then
-        echo -e "${RED}❌ 错误: 您尚未在 install.sh 中配置您的 GITHUB_USER / GITHUB_REPO。${NC}"
-        echo -e "请在 GitHub 创建仓库后，修改本脚本中的配置，或在本地运行 pyinstaller 生成编译包。"
-        exit 1
-    fi
+    USER_LANG="zh"
+    echo -e "✓ 语言设置为：简体中文。"
+fi
 
-    # 从 GitHub 获取最新 Release 的下载链接 (优先通过 302 重定向解析最新 tag，规避 GitHub API 频次限制)
-    echo -e "🌐 正在获取 GitHub 最新发布版本信息..."
+# Write language configuration
+echo "{\"lang\": \"$USER_LANG\"}" > "$INSTALL_DIR/config.json"
+
+# 2. Install binaries (local or remote)
+install_binary() {
+    local name=$1
+    local local_file="dist/$name"
     
-    # 通过 302 重定向 Location 头部获取最新发布版本 tag
-    REDIRECT_URL=$(curl -sI "https://github.com/$GITHUB_USER/$GITHUB_REPO/releases/latest" | grep -i '^location:' | cut -d' ' -f2 | tr -d '\r\n' || true)
-    
-    if [ -n "$REDIRECT_URL" ] && [[ "$REDIRECT_URL" == *"/releases/tag/"* ]]; then
-        TAG=$(basename "$REDIRECT_URL")
-        DOWNLOAD_URL="https://github.com/$GITHUB_USER/$GITHUB_REPO/releases/download/$TAG/douyin-dl"
+    if [ -f "$local_file" ]; then
+        if [ "$USER_LANG" = "zh" ]; then
+            echo -e "📦 检测到本地已编译好的二进制文件，正在安装 $name ..."
+        else
+            echo -e "📦 Local pre-compiled binary found, installing $name ..."
+        fi
+        cp "$local_file" "$INSTALL_DIR/"
     else
-        # 兜底方案：通过 REST API 解析 (若未发布任何 Release，重定向可能失败)
-        echo -e "⚠️  未检测到重定向，尝试备用 API 接口解析..."
-        API_URL="https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/releases/latest"
-        DOWNLOAD_URL=$(curl -s "$API_URL" | grep -o '"browser_download_url": *"[^"]*"' | grep -o 'http[^"]*' | grep -E '/douyin-dl$' | head -n 1 || true)
+        if [ "$GITHUB_USER" = "YOUR_GITHUB_USERNAME" ] || [ "$GITHUB_REPO" = "YOUR_GITHUB_REPO" ]; then
+            echo -e "${RED}❌ Error: GITHUB_USER / GITHUB_REPO not configured in install.sh.${NC}"
+            exit 1
+        fi
+
+        if [ "$USER_LANG" = "zh" ]; then
+            echo -e "🌐 正在从 GitHub 获取最新版本 $name 的下载链接..."
+        else
+            echo -e "🌐 Fetching download link for $name from GitHub..."
+        fi
+        
+        # Resolve redirect from latest releases
+        REDIRECT_URL=$(curl -sI "https://github.com/$GITHUB_USER/$GITHUB_REPO/releases/latest" | grep -i '^location:' | cut -d' ' -f2 | tr -d '\r\n' || true)
+        
+        if [ -n "$REDIRECT_URL" ] && [[ "$REDIRECT_URL" == *"/releases/tag/"* ]]; then
+            TAG=$(basename "$REDIRECT_URL")
+            DOWNLOAD_URL="https://github.com/$GITHUB_USER/$GITHUB_REPO/releases/download/$TAG/$name"
+        else
+            # Fallback REST API
+            API_URL="https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/releases/latest"
+            DOWNLOAD_URL=$(curl -s "$API_URL" | grep -o '"browser_download_url": *"[^"]*"' | grep -o 'http[^"]*' | grep -E "/$name$" | head -n 1 || true)
+        fi
+        
+        if [ -z "$DOWNLOAD_URL" ] || [[ "$DOWNLOAD_URL" == *"rate limit exceeded"* ]]; then
+            if [ "$USER_LANG" = "zh" ]; then
+                echo -e "${RED}❌ 错误: 无法获取 $name 的下载链接，可能 Releases 中尚未发布此文件。${NC}"
+            else
+                echo -e "${RED}❌ Error: Failed to retrieve download link for $name. Check if the asset exists in Releases.${NC}"
+            fi
+            exit 1
+        fi
+
+        if [ "$USER_LANG" = "zh" ]; then
+            echo -e "⚡ 正在下载最新版 $name ..."
+        else
+            echo -e "⚡ Downloading latest release of $name ..."
+        fi
+        curl -L -# "$DOWNLOAD_URL" -o "$INSTALL_DIR/$name"
     fi
     
-    if [ -z "$DOWNLOAD_URL" ] || [[ "$DOWNLOAD_URL" == *"rate limit exceeded"* ]]; then
-        echo -e "${RED}❌ 错误: 未能在 GitHub 获取到名为 'douyin-dl' 的发布包地址。${NC}"
-        echo -e "可能原因："
-        echo -e "1. 您的 GitHub Actions 自动编译尚未结束（请稍候 2 分钟在 GitHub Actions 页面查看进度）"
-        echo -e "2. 本机 IP 在 GitHub 上的 API 访问频次超限"
-        exit 1
-    fi
+    chmod +x "$INSTALL_DIR/$name"
+}
 
-    echo -e "⚡ 正在从 GitHub 下载最新预编译包 (${BLUE}douyin-dl${NC}) ..."
-    curl -L -# "$DOWNLOAD_URL" -o "$INSTALL_DIR/douyin-dl"
+# Install both tools
+install_binary "douyin-dl"
+install_binary "tiktok-dl"
+
+# 3. Configure Terminals/Aliases
+echo -e "\n${YELLOW}💬 配置启动命令 / Configure Startup Commands:${NC}"
+
+# Configure Douyin Command
+if [ "$USER_LANG" = "zh" ]; then
+    read -p "请输入 抖音下载器 终端激活命令 (回车默认使用 'douyin-dl'): " CUSTOM_DOUYIN < /dev/tty
+else
+    read -p "Enter terminal command for Douyin downloader (Press Enter for 'douyin-dl'): " CUSTOM_DOUYIN < /dev/tty
 fi
-
-# 2. 赋予执行权限
-chmod +x "$INSTALL_DIR/douyin-dl"
-
-# 3. 配置自定义终端命令
-echo -e "\n${YELLOW}💬 配置自定义启动命令：${NC}"
-read -p "请输入您希望使用的终端激活命令 (直接回车默认使用 'douyin-dl'): " CUSTOM_CMD < /dev/tty
-if [ -z "$CUSTOM_CMD" ]; then
-    CUSTOM_CMD="douyin-dl"
+if [ -z "$CUSTOM_DOUYIN" ]; then
+    CUSTOM_DOUYIN="douyin-dl"
 fi
+ln -sf "$INSTALL_DIR/douyin-dl" "$BIN_DIR/$CUSTOM_DOUYIN"
 
-WRAPPER_PATH="$BIN_DIR/$CUSTOM_CMD"
+# Configure TikTok Command
+if [ "$USER_LANG" = "zh" ]; then
+    read -p "请输入 TikTok下载器 终端激活命令 (回车默认使用 'tiktok-dl'): " CUSTOM_TIKTOK < /dev/tty
+else
+    read -p "Enter terminal command for TikTok downloader (Press Enter for 'tiktok-dl'): " CUSTOM_TIKTOK < /dev/tty
+fi
+if [ -z "$CUSTOM_TIKTOK" ]; then
+    CUSTOM_TIKTOK="tiktok-dl"
+fi
+ln -sf "$INSTALL_DIR/tiktok-dl" "$BIN_DIR/$CUSTOM_TIKTOK"
 
-# 生成调用软链接或轻量包装
-echo -e "📝 正在生成启动快捷方式 ${BLUE}$WRAPPER_PATH${NC} ..."
-ln -sf "$INSTALL_DIR/douyin-dl" "$WRAPPER_PATH"
-
-# 4. 自动配置环境变量 $PATH
+# 4. Check Environment $PATH
 NEED_SOURCE=false
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    echo -e "\n⚙️  正在检测并配置环境变量..."
+    if [ "$USER_LANG" = "zh" ]; then
+        echo -e "\n⚙️  正在检测并配置环境变量..."
+    else
+        echo -e "\n⚙️  Detecting and configuring environment PATH..."
+    fi
     
-    # 写入 ~/.bashrc
+    # Write ~/.bashrc
     if [ -f "$HOME/.bashrc" ]; then
         if ! grep -q "export PATH=\"\$HOME/.local/bin:\$PATH\"" "$HOME/.bashrc"; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-            echo -e "   ✓ 已向 ~/.bashrc 追加环境变量配置"
             NEED_SOURCE=true
         fi
     fi
     
-    # 写入 ~/.zshrc
+    # Write ~/.zshrc
     if [ -f "$HOME/.zshrc" ]; then
         if ! grep -q "export PATH=\"\$HOME/.local/bin:\$PATH\"" "$HOME/.zshrc"; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
-            echo -e "   ✓ 已向 ~/.zshrc 追加环境变量配置"
             NEED_SOURCE=true
         fi
     fi
-else
-    echo -e "\n✅ 检测到 ~/.local/bin 已在您的环境变量中，无需额外配置。"
 fi
 
-echo -e "${GREEN}================================──────────────────${NC}"
-echo -e "${GREEN}🎉 安装与配置成功！${NC}"
-echo -e "${GREEN}================================──────────────────${NC}"
-echo -e "📁 程序保存路径: ${BLUE}$INSTALL_DIR/douyin-dl${NC}"
-echo -e "🚀 终端全局命令: ${BLUE}$CUSTOM_CMD${NC} (已链接到 $WRAPPER_PATH)"
-echo -e ""
-echo -e "${YELLOW}🔔 使用提示:${NC}"
-if [ "$NEED_SOURCE" = true ]; then
-    echo -e "1. 💡 ${YELLOW}请先运行 'source ~/.bashrc' (或 'source ~/.zshrc')，或重启终端使配置生效！${NC}"
-    echo -e "2. 之后在终端任意目录下直接输入 ${GREEN}$CUSTOM_CMD${NC} 即可享受纯净下载！"
+# Print Success message
+echo -e "${GREEN}==================================================${NC}"
+if [ "$USER_LANG" = "zh" ]; then
+    echo -e "${GREEN}🎉 安装与配置成功！${NC}"
+    echo -e "${GREEN}==================================================${NC}"
+    echo -e "📁 程序保存路径: ${BLUE}$INSTALL_DIR${NC}"
+    echo -e "🚀 抖音下载命令: ${BLUE}$CUSTOM_DOUYIN${NC}"
+    echo -e "🚀 TikTok下载命令: ${BLUE}$CUSTOM_TIKTOK${NC}"
+    echo -e ""
+    echo -e "${YELLOW}🔔 使用提示:${NC}"
+    if [ "$NEED_SOURCE" = true ]; then
+        echo -e "1. 💡 ${YELLOW}请先运行 'source ~/.bashrc' (或 'source ~/.zshrc') 使配置生效！${NC}"
+        echo -e "2. 之后在终端任意目录下运行 ${GREEN}$CUSTOM_DOUYIN${NC} 或 ${GREEN}$CUSTOM_TIKTOK${NC} 即可下载！"
+    else
+        echo -e "1. 终端任意目录下直接运行 ${GREEN}$CUSTOM_DOUYIN${NC} 或 ${GREEN}$CUSTOM_TIKTOK${NC} 即可下载！"
+    fi
 else
-    echo -e "1. 终端任意目录下直接输入 ${GREEN}$CUSTOM_CMD${NC} 即可享受纯净下载！"
+    echo -e "${GREEN}🎉 Installation & Configuration Successful!${NC}"
+    echo -e "${GREEN}==================================================${NC}"
+    echo -e "📁 Installation Directory: ${BLUE}$INSTALL_DIR${NC}"
+    echo -e "🚀 Douyin Command: ${BLUE}$CUSTOM_DOUYIN${NC}"
+    echo -e "🚀 TikTok Command: ${BLUE}$CUSTOM_TIKTOK${NC}"
+    echo -e ""
+    echo -e "${YELLOW}🔔 Note:${NC}"
+    if [ "$NEED_SOURCE" = true ]; then
+        echo -e "1. 💡 ${YELLOW}Please run 'source ~/.bashrc' (or 'source ~/.zshrc') to apply PATH changes!${NC}"
+        echo -e "2. Then type ${GREEN}$CUSTOM_DOUYIN${NC} or ${GREEN}$CUSTOM_TIKTOK${NC} anywhere in terminal to start."
+    else
+        echo -e "1. Type ${GREEN}$CUSTOM_DOUYIN${NC} or ${GREEN}$CUSTOM_TIKTOK${NC} anywhere in your terminal to start."
+    fi
 fi
-echo -e "================================──────────────────"
+echo -e "=================================================="
