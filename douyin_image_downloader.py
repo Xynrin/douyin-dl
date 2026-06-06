@@ -44,9 +44,16 @@ except ImportError:
     PILImage = None
 
 # 版本控制与 GitHub 自动更新配置
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 GITHUB_USER = "Xynrin"
 GITHUB_REPO = "douyin-dl"
+
+def parse_version(v_str):
+    """解析版本字符串为数字元组，便于进行大小比较"""
+    try:
+        return tuple(int(x) for x in re.findall(r'\d+', v_str))
+    except Exception:
+        return (0,)
 
 def check_for_updates(silent=False):
     """检查 GitHub 上的最新版本并提示自动更新"""
@@ -102,8 +109,8 @@ def check_for_updates(silent=False):
                 print(f"⚠️  检查更新失败 (网络超时或未公开): {e}")
             return
 
-    # 3. 统一进行版本对比与更新提示
-    if latest_version and latest_version != VERSION:
+    # 3. 统一进行版本对比与更新提示 (仅在最新版本大于当前版本时提示)
+    if latest_version and parse_version(latest_version) > parse_version(VERSION):
         print(f"\n✨ 发现新版本: v{latest_version} (当前版本: v{VERSION})")
         
         if changelog:
