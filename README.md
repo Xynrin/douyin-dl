@@ -48,22 +48,6 @@ douyin-dl "分享文本或链接" [输出根目录]
 douyin-dl "https://v.douyin.com/xxxxxx/" ./my_downloads
 ```
 
----
-
-## ⚙️ 开发者二次编译 (本地打包)
-
-如果您修改了代码并想在本地重新打包，只需在虚拟环境中运行：
-
-```bash
-# 1. 确保在本地虚拟环境安装了 pyinstaller
-./.venv/bin/python -m pip install pyinstaller
-
-# 2. 运行打包指令将 Chromium 编译进单文件中
-./.venv/bin/pyinstaller --onefile --clean --name=douyin-dl \
-  --add-data ".venv/lib/python3.14/site-packages/playwright/driver:playwright/driver" \
-  douyin_image_downloader.py
-```
-编译完成的文件将保存在 `dist/douyin-dl` 目录下。
 
 ---
 

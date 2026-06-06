@@ -23,3 +23,6 @@ douyin_downloads/
 debug_page.html
 debug_page.py
 EOF
+
+# 核心
+douyin_image_downloader.py
