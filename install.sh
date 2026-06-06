@@ -73,7 +73,7 @@ chmod +x "$INSTALL_DIR/douyin-dl"
 
 # 3. 配置自定义终端命令
 echo -e "\n${YELLOW}💬 配置自定义启动命令：${NC}"
-read -p "请输入您希望使用的终端激活命令 (直接回车默认使用 'douyin-dl'): " CUSTOM_CMD
+read -p "请输入您希望使用的终端激活命令 (直接回车默认使用 'douyin-dl'): " CUSTOM_CMD < /dev/tty
 if [ -z "$CUSTOM_CMD" ]; then
     CUSTOM_CMD="douyin-dl"
 fi
