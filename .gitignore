@@ -25,8 +25,8 @@ debug_page.py
 EOF
 
 # 核心
-douyin_image_downloader.py
-tiktok_downloader.py
+# douyin_image_downloader.py
+# tiktok_downloader.py
 
 # Temp and scratch files
 scratch/
