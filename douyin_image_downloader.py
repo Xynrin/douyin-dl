@@ -480,8 +480,9 @@ def process_single(url, browser, output_base, index, total):
             raise Exception("Aweme detail node not found in JSON data.")
             
         desc = aweme_detail.get('desc', 'douyin_media').strip()
-        # 清洗文件名安全字符
-        desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc)[:40] or "douyin_media"
+        # 清洗文件名安全字符，去掉换行
+        desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc).replace("\n", " ").replace("\r", " ")
+        desc_clean = desc_clean.strip()[:40] or "douyin_media"
         aweme_id = aweme_detail.get('awemeId') or aweme_detail.get('aweme_id')
         if not aweme_id:
             # 尝试从当前重定向后的 URL 提取 ID
@@ -524,11 +525,17 @@ def process_single(url, browser, output_base, index, total):
                 img_path = os.path.join(output_dir, img_filename)
                 
                 try:
-                    req = urllib.request.Request(img_url, headers=headers)
-                    with urllib.request.urlopen(req) as resp:
-                        img_data = resp.read()
-                        with open(img_path, "wb") as f:
-                            f.write(img_data)
+                    # 优先使用 Playwright 下载
+                    pw_resp = page.request.get(img_url, headers={"Referer": "https://www.douyin.com/"})
+                    if pw_resp.status == 200:
+                        img_data = pw_resp.body()
+                    else:
+                        req = urllib.request.Request(img_url, headers=headers)
+                        with urllib.request.urlopen(req) as resp:
+                            img_data = resp.read()
+                    
+                    with open(img_path, "wb") as f:
+                        f.write(img_data)
                     
                     # 尝试利用 Pillow 获取图片尺寸
                     resolution = "N/A"

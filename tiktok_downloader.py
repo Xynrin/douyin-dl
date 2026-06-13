@@ -374,8 +374,9 @@ def process_single(url, browser, output_base, index, total):
             raise Exception("Failed to locate itemStruct in JSON data.")
             
         desc = item.get("desc", "tiktok_media").strip()
-        # 清洗文件名安全字符
-        desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc)[:40] or "tiktok_media"
+        # 清洗文件名安全字符，去掉换行
+        desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc).replace("\n", " ").replace("\r", " ")
+        desc_clean = desc_clean.strip()[:40] or "tiktok_media"
         aweme_id = item.get("id")
         if not aweme_id:
             aweme_id = str(int(time.time()))
@@ -383,7 +384,7 @@ def process_single(url, browser, output_base, index, total):
         # 获取作者信息用于归档
         author_info = item.get("author", {})
         author_name = author_info.get("nickname") or author_info.get("uniqueId") or "Unknown_Author"
-        author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).strip()[:30]
+        author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).replace("\n", " ").replace("\r", " ").strip()[:30]
         author_dir = os.path.join(output_base, author_clean)
         os.makedirs(author_dir, exist_ok=True)
             
