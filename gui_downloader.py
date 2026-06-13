@@ -173,15 +173,17 @@ def _mkdir_with_fallback(path: str, log_queue=None, lang: str = "zh") -> str:
         raise e
 
 
+import douyin_image_downloader
+import tiktok_downloader
+
 def get_module(platform: str):
     """动态加载对应平台模块。未知平台抛出 ValueError。"""
     if platform == "douyin":
-        module_name = "douyin_image_downloader"
+        return douyin_image_downloader
     elif platform == "tiktok":
-        module_name = "tiktok_downloader"
+        return tiktok_downloader
     else:
         raise ValueError(f"Unknown platform: {platform}")
-    return importlib.import_module(module_name)
 
 
 def extract_unique_urls(platform_module, raw_text: str) -> list:
