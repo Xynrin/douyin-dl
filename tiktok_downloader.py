@@ -380,6 +380,13 @@ def process_single(url, browser, output_base, index, total):
         if not aweme_id:
             aweme_id = str(int(time.time()))
             
+        # 获取作者信息用于归档
+        author_info = item.get("author", {})
+        author_name = author_info.get("nickname") or author_info.get("uniqueId") or "Unknown_Author"
+        author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).strip()[:30]
+        author_dir = os.path.join(output_base, author_clean)
+        os.makedirs(author_dir, exist_ok=True)
+            
         video_info = item.get("video", {})
         play_addr = video_info.get("playAddr")
         
@@ -391,7 +398,7 @@ def process_single(url, browser, output_base, index, total):
             title_log = t("image_found", title=desc_clean, id=aweme_id, count=len(images))
             print(title_log)
             
-            output_dir = os.path.join(output_base, f"{aweme_id}_{desc_clean}")
+            output_dir = os.path.join(author_dir, f"[图文]_{aweme_id}_{desc_clean}")
             os.makedirs(output_dir, exist_ok=True)
             
             headers = {
@@ -441,8 +448,8 @@ def process_single(url, browser, output_base, index, total):
             print(title_log)
             
             # 确定文件名和保存路径
-            filename = f"{aweme_id}_{desc_clean}.mp4"
-            filepath = os.path.join(output_base, filename)
+            filename = f"[视频]_{aweme_id}_{desc_clean}.mp4"
+            filepath = os.path.join(author_dir, filename)
             
             # 使用 Playwright page.request 下载直接的 playAddr（不需要水印提取，原始 CDN 无水印）
             resp = page.request.get(play_addr, headers={"Referer": "https://www.tiktok.com/"})

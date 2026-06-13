@@ -490,6 +490,13 @@ def process_single(url, browser, output_base, index, total):
         if not aweme_id:
             raise Exception("Failed to parse aweme_id.")
             
+        # 获取作者信息用于归档
+        author_info = aweme_detail.get('author', {})
+        author_name = author_info.get('nickname') or author_info.get('sec_uid') or "Unknown_Author"
+        author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).strip()[:30]
+        author_dir = os.path.join(output_base, author_clean)
+        os.makedirs(author_dir, exist_ok=True)
+            
         # 1. 优先提取图文相册
         images = aweme_detail.get('images')
         if images and isinstance(images, list):
@@ -497,7 +504,7 @@ def process_single(url, browser, output_base, index, total):
             print(title_log)
             
             # 创建图文专属存放子目录
-            output_dir = os.path.join(output_base, f"{aweme_id}_{desc_clean}")
+            output_dir = os.path.join(author_dir, f"[图文]_{aweme_id}_{desc_clean}")
             os.makedirs(output_dir, exist_ok=True)
             
             headers = {
