@@ -8,7 +8,7 @@ import tempfile
 import subprocess
 import tkinter.messagebox as messagebox
 
-CURRENT_VERSION = "v1.6.1"
+CURRENT_VERSION = "v1.6.2"
 
 def check_for_updates(root, silent=True):
     def _run():
@@ -73,28 +73,29 @@ def check_for_updates(root, silent=True):
     threading.Thread(target=_run, daemon=True).start()
 
 def _start_download_and_update(root, download_url):
+    import tkinter as tk
+    from tkinter import ttk
+    import zipfile
+    
+    progress_win = tk.Toplevel(root)
+    progress_win.title("软件更新中")
+    progress_win.geometry("350x150")
+    progress_win.resizable(False, False)
+    progress_win.transient(root)
+    progress_win.grab_set()
+    
+    tk.Label(progress_win, text="正在下载最新安装包，请耐心等待...", font=("微软雅黑", 10)).pack(pady=15)
+    progress_bar = ttk.Progressbar(progress_win, length=280, mode='determinate')
+    progress_bar.pack(pady=5)
+    lbl_progress = tk.Label(progress_win, text="0 MB / 0 MB", font=("微软雅黑", 9))
+    lbl_progress.pack(pady=5)
+    
     def _download():
         try:
-            import zipfile
             temp_dir = tempfile.gettempdir()
             zip_path = os.path.join(temp_dir, "MediaDownloader_Update.zip")
             setup_path = os.path.join(temp_dir, "MediaDownloader_Setup.exe")
-            
-            # 创建下载进度窗口
-            import tkinter as tk
-            from tkinter import ttk
-            progress_win = tk.Toplevel(root)
-            progress_win.title("软件更新中")
-            progress_win.geometry("350x150")
-            progress_win.resizable(False, False)
-            progress_win.transient(root)
-            progress_win.grab_set()
-            
-            tk.Label(progress_win, text="正在下载最新安装包，请耐心等待...", font=("微软雅黑", 10)).pack(pady=15)
-            progress_bar = ttk.Progressbar(progress_win, length=280, mode='determinate')
-            progress_bar.pack(pady=5)
-            lbl_progress = tk.Label(progress_win, text="0 MB / 0 MB", font=("微软雅黑", 9))
-            lbl_progress.pack(pady=5)
+
             
             # 使用 urlopen 分块下载并更新进度条
             req = urllib.request.Request(download_url, headers={"User-Agent": "Mozilla/5.0"})
