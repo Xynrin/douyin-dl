@@ -8,7 +8,7 @@ import tempfile
 import subprocess
 import tkinter.messagebox as messagebox
 
-CURRENT_VERSION = "v1.6.2"
+CURRENT_VERSION = "v1.6.4"
 
 def check_for_updates(root, silent=True):
     def _run():
@@ -100,9 +100,10 @@ def _start_download_and_update(root, download_url):
             # download_url looks like: https://ghp.ci/https://github.com/Xynrin/tiktok-douyin-dl/releases/download/v1.6.2/MediaDownloader_Windows_Setup.zip
             raw_url = download_url.replace("https://ghp.ci/", "")
             urls_to_try = [
+                f"https://gh-proxy.com/{raw_url}",
                 download_url,
-                raw_url,
-                f"https://ghproxy.net/{raw_url}"
+                f"https://ghproxy.net/{raw_url}",
+                raw_url
             ]
             
             success = False
