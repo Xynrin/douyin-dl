@@ -40,4 +40,4 @@ Filename: "{app}\MediaDownloader_GUI.exe"; Description: "启动 MediaDownloader"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
-Type: filesandordirs; Name: "{userprofile}\.cache\ms-playwright"
+Type: filesandordirs; Name: "{%USERPROFILE}\.cache\ms-playwright"
