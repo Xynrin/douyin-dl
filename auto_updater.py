@@ -8,14 +8,14 @@ import tempfile
 import subprocess
 import tkinter.messagebox as messagebox
 
-CURRENT_VERSION = "v1.3.0"
+CURRENT_VERSION = "v1.3.1"
 REPO_API_URL = "https://api.github.com/repos/Xynrin/tiktok-douyin-dl/releases/latest"
 
 def check_for_updates(root, silent=True):
     def _run():
         try:
             req = urllib.request.Request(REPO_API_URL, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
                 
             latest_version = data.get("tag_name", "")
@@ -44,7 +44,8 @@ def check_for_updates(root, silent=True):
                     root.after(0, lambda: messagebox.showinfo("检查更新", "当前已经是最新版本！", parent=root))
         except Exception as e:
             if not silent:
-                root.after(0, lambda: messagebox.showerror("检查更新失败", f"网络错误：{e}", parent=root))
+                err_msg = f"无法连接到 GitHub 检查更新。\n\n这通常是因为国内网络访问 Github API 受到限制。\n请开启全局代理后再试。\n\n详细报错：{e}"
+                root.after(0, lambda: messagebox.showerror("网络错误", err_msg, parent=root))
     
     threading.Thread(target=_run, daemon=True).start()
 

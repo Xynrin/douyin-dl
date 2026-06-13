@@ -483,40 +483,38 @@ def start_download_thread(platform: str, raw_text: str, output_dir: str,
 _GUI_DISCLAIMER_ZH = """================================================================================
                                 【 免 责 声 明 】
 ================================================================================
- 1. 本工具（以下简称"本软件"）仅限用于个人学习研究、学术交流及网页技术备份
-    测试，严禁用于任何商业用途、非法抓取或网络攻击。
- 2. 本软件所下载的所有音视频、图文等媒体资源，其知识产权及著作权归原作者/
-    版权所有者或相关平台所有。用户下载后应于24小时内删除，且不得在未经原作者
-    授权的情况下进行二次传播、修改、上传或用于任何盈利性活动。
- 3. 用户在使用本软件时，必须遵守当地法律法规、目的平台用户协议及相关服务条款。
-    因使用本软件导致的一切直接或间接法律纠纷、版权诉讼、经济赔偿，或因频繁请求
-    导致的平台账号限制、IP风控封禁等后果，均由使用者自行承担全部责任。
- 4. 本软件按"原样"（AS IS）提供，不附带任何明示或暗示的保证，包括但不限于
-    对特定用途的适用性。作者在任何情况下均不对因使用或无法使用本软件而产生的
-    任何直接、间接、偶然、特殊或惩罚性损害（包括法律处罚）承担任何赔偿责任。
- 5. 任何复制、运行、分发或以任何方式使用本软件的行为，即视为您已完全阅读、
-    理解并无条件接受本声明的所有条款。如果您不同意本声明的任何内容，请立即
-    停止使用并卸载本软件。
+ 1. 【核心定位与技术本质】本工具仅作为网络自动化测试、前端渲染解析及编程学习的纯技术演示项目。
+    本软件不提供、不存储、不分发任何媒体数据，仅为模拟用户在公开网络环境下的常规浏览器行为。
+ 2. 【禁止非法与商业用途】本软件及源代码严禁用于任何形式的商业盈利、代下载服务、批量刷量、恶意攻击
+    或其他任何破坏网络生态及违反国家法律法规的行为。用户仅可用于个人私下的学习与合规技术验证。
+ 3. 【版权与知识产权免责】本软件运行中解析的数据均直接来源于目标平台公开页面。所有媒体资源知识产权
+    归属于原作者或相关版权方。用户有义务在测试后24小时内销毁数据，严禁未经授权的传播或商用。
+    作者对用户的任何侵权行为不承担连带赔偿责任。
+ 4. 【风控与账号安全免责】由于目标平台存在风控机制，频繁调用可能触发警报导致账号限流、IP被封禁。
+    本软件不承诺规避上述风险，因使用本软件导致的任何账号财产损失或服务限制，由用户自行承担一切后果。
+ 5. 【绝对的免责与开发者权利】本软件按"原样"（AS IS）免费提供，不附带任何明示或暗示的担保。
+    本软件作者及其合法授权团队不对因使用本软件造成的任何直接或间接损害承担责任，并在合法合规
+    的前提下保留自主使用或研究本核心技术的权利。
+ 
+ * 任何运行本软件的行为，即视为您已无条件接受本声明的所有条款并承诺自行承担100%独立法律责任。
 ================================================================================"""
 
 _GUI_DISCLAIMER_EN = """================================================================================
                                 【 DISCLAIMER 】
 ================================================================================
- 1. This tool (hereinafter referred to as "the software") is strictly for personal
-    learning, research, academic exchanges, and technical backup tests. Commercial
-    use, malicious scraping, or network attacks are strictly prohibited.
- 2. All media resources (videos, images, etc.) downloaded belong to the original
-    creators/copyright owners. Users must delete them within 24 hours and must not
-    redistribute, modify, upload, or use them for profit without authorization.
- 3. Users must comply with local laws and platform Terms of Service. The user assumes
-    full responsibility for any legal disputes, copyright lawsuits, financial damages,
-    account restrictions, or IP bans caused by using this software.
- 4. This software is provided "AS IS" without warranties of any kind. Under no
-    circumstances shall the author be liable for any direct, indirect, incidental,
-    or special damages arising from the use or inability to use this software.
- 5. Running, distributing, or using this software constitutes unconditional acceptance
-    of this disclaimer. If you disagree with any terms, please stop using and uninstall
-    this software immediately.
+ 1. [Core Purpose] This tool is purely a technical demonstration for web automation testing, frontend
+    parsing, and programming learning. It simulates normal browser behavior in public networks.
+ 2. [Prohibited Uses] Commercial use, proxy downloading, malicious scraping, or any illegal activities
+    are strictly prohibited. Users must only use this tool for personal learning and compliance testing.
+ 3. [Copyright Exemption] All parsed data originates from public pages. Intellectual property rights
+    belong to the original creators. Users must destroy data within 24 hours. Unauthorized commercial
+    use is forbidden. The author bears no liability for user infringement.
+ 4. [Risk & Account Safety] Frequent requests may trigger platform anti-bot mechanisms, leading to IP
+    bans or account restrictions. The user assumes all consequences and liabilities.
+ 5. [Absolute Exemption & Dev Rights] Provided "AS IS" with no warranties. The author is not liable
+    for any damages. The creator/author reserves the right to use this tool for legal research.
+ 
+ * Running this software constitutes unconditional acceptance of this legally binding disclaimer.
 ================================================================================"""
 
 
@@ -882,18 +880,44 @@ class App(tk.Tk):
             version = auto_updater.CURRENT_VERSION
         except ImportError:
             version = "v1.0.0"
-        
-        msg = (f"TikTok / Douyin Downloader\n"
-               f"当前版本: {version}\n\n"
-               f"基于 Playwright 的无水印批量下载器\n"
-               f"作者: Xynrin\n\n"
-               f"是否立即检查更新？")
-        if messagebox.askyesno("关于", msg, parent=self):
+            
+        import webbrowser
+        about_win = tk.Toplevel(self)
+        about_win.title("关于")
+        about_win.geometry("350x280")
+        about_win.resizable(False, False)
+        about_win.transient(self)
+        about_win.grab_set()
+
+        # 居中
+        self.update_idletasks()
+        x = self.winfo_rootx() + (self.winfo_width() - 350) // 2
+        y = self.winfo_rooty() + (self.winfo_height() - 280) // 2
+        about_win.geometry(f"+{max(0, x)}+{max(0, y)}")
+
+        ttk.Label(about_win, text="MediaDownloader", font=("", 16, "bold")).pack(pady=(20, 5))
+        ttk.Label(about_win, text=f"当前版本: {version}").pack(pady=2)
+        ttk.Label(about_win, text="基于 Playwright 的无水印批量下载器").pack(pady=(10, 2))
+
+        # 仓库链接
+        repo_link = ttk.Label(about_win, text="🔗 项目主页: GitHub 仓库", foreground="#58a6ff", cursor="hand2")
+        repo_link.pack(pady=4)
+        repo_link.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Xynrin/tiktok-douyin-dl"))
+
+        # 作者链接
+        author_link = ttk.Label(about_win, text="👨‍💻 作者: Xynrin", foreground="#58a6ff", cursor="hand2")
+        author_link.pack(pady=4)
+        author_link.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Xynrin"))
+
+        def _do_update():
+            about_win.destroy()
             try:
                 import auto_updater
                 auto_updater.check_for_updates(self, silent=False)
             except ImportError:
                 messagebox.showerror("错误", "自动更新模块未找到！", parent=self)
+
+        ttk.Button(about_win, text="检查更新", command=_do_update).pack(pady=(20, 10))
 
     # ------------------------------------------------------------------ 事件处理
 
