@@ -533,46 +533,52 @@ def process_single(url, browser, output_base, index, total):
                 url_list = img_obj.get('urlList') or img_obj.get('url_list')
                 if not url_list:
                     continue
-                # 取最高画质的图片链接 (通常是第一个)
-                img_url = url_list[0]
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                    
                 img_filename = get_next_filename(output_base, "jpg")
                 img_path = os.path.join(output_base, img_filename)
                 
                 # 预占位防止循环内重名
                 with open(img_path, "wb") as f:
                     pass
-                
-                try:
-                    # 优先使用 Playwright 下载
-                    pw_resp = page.request.get(img_url, headers={"Referer": "https://www.douyin.com/"})
-                    if pw_resp.status != 200:
-                        # 尝试不带 Referer 重试
-                        pw_resp = page.request.get(img_url)
+                    
+                # 遍历备用链接，防止某个 CDN 节点 403
+                success_img = False
+                for img_url in url_list:
+                    if img_url.startswith('//'):
+                        img_url = 'https:' + img_url
                         
-                    if pw_resp.status == 200:
-                        img_data = pw_resp.body()
-                    else:
-                        req = urllib.request.Request(img_url, headers={"User-Agent": headers["User-Agent"]})
-                        with urllib.request.urlopen(req) as resp:
-                            img_data = resp.read()
-                    
-                    with open(img_path, "wb") as f:
-                        f.write(img_data)
-                    
-                    # 尝试利用 Pillow 获取图片尺寸
-                    resolution = "N/A"
-                    if PILImage:
-                        try:
-                            with PILImage.open(img_path) as p_img:
-                                resolution = f"{p_img.width}x{p_img.height}"
-                        except Exception:
-                            pass
-                    print(t("download_success", filename=img_filename, size=format_size(len(img_data)), resolution=resolution))
-                except Exception as img_err:
-                    print(t("download_failed", err=img_err))
+                    try:
+                        # 尝试通过 Playwright 获取
+                        pw_resp = page.request.get(img_url, headers={"Referer": "https://www.douyin.com/"})
+                        if pw_resp.status != 200:
+                            pw_resp = page.request.get(img_url)
+                            
+                        if pw_resp.status == 200:
+                            img_data = pw_resp.body()
+                        else:
+                            # 降级使用 urllib
+                            req = urllib.request.Request(img_url, headers={"User-Agent": headers["User-Agent"]})
+                            with urllib.request.urlopen(req) as resp:
+                                img_data = resp.read()
+                        
+                        with open(img_path, "wb") as f:
+                            f.write(img_data)
+                        
+                        # 尝试利用 Pillow 获取图片尺寸
+                        resolution = "N/A"
+                        if PILImage:
+                            try:
+                                with PILImage.open(img_path) as p_img:
+                                    resolution = f"{p_img.width}x{p_img.height}"
+                            except Exception:
+                                pass
+                        print(t("download_success", filename=img_filename, size=format_size(len(img_data)), resolution=resolution))
+                        success_img = True
+                        break  # 只要有一个链接下载成功就跳出循环
+                    except Exception as e:
+                        continue  # 失败则尝试下一个备用链接
+                        
+                if not success_img:
+                    print(t("download_failed", err="All fallback URLs returned 403 or failed."))
                     
         # 2. 若不是图文，则提取视频
         else:

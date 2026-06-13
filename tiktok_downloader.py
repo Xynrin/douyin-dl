@@ -425,15 +425,17 @@ def process_single(url, browser, output_base, index, total):
             }
             
             for i, img in enumerate(images, 1):
-                img_url = None
-                if "displayAddr" in img:
-                    img_url = img["displayAddr"]
-                elif "imageURL" in img and "urlList" in img["imageURL"]:
-                    img_url = img["imageURL"]["urlList"][0]
-                elif "thumbnail" in img and "urlList" in img["thumbnail"]:
-                    img_url = img["thumbnail"]["urlList"][0]
+                urls_to_try = []
+                if "displayAddr" in img and isinstance(img["displayAddr"], dict) and "urlList" in img["displayAddr"]:
+                    urls_to_try.extend(img["displayAddr"]["urlList"])
+                elif "displayAddr" in img and isinstance(img["displayAddr"], str):
+                    urls_to_try.append(img["displayAddr"])
+                if "imageURL" in img and "urlList" in img["imageURL"]:
+                    urls_to_try.extend(img["imageURL"]["urlList"])
+                if "thumbnail" in img and "urlList" in img["thumbnail"]:
+                    urls_to_try.extend(img["thumbnail"]["urlList"])
                     
-                if not img_url:
+                if not urls_to_try:
                     continue
                     
                 img_filename = get_next_filename(output_base, "jpg")
@@ -443,29 +445,36 @@ def process_single(url, browser, output_base, index, total):
                 with open(img_path, "wb") as f:
                     pass
                 
-                try:
-                    resp = page.request.get(img_url, headers={"Referer": "https://www.tiktok.com/"})
-                    if resp.status != 200:
-                        resp = page.request.get(img_url)
+                success_img = False
+                for img_url in urls_to_try:
+                    try:
+                        resp = page.request.get(img_url, headers={"Referer": "https://www.tiktok.com/"})
+                        if resp.status != 200:
+                            resp = page.request.get(img_url)
+                            
+                        if resp.status == 200:
+                            img_data = resp.body()
+                            with open(img_path, "wb") as f:
+                                f.write(img_data)
+                        else:
+                            raise Exception(f"HTTP {resp.status}")
                         
-                    if resp.status == 200:
-                        img_data = resp.body()
-                        with open(img_path, "wb") as f:
-                            f.write(img_data)
-                    else:
-                        raise Exception(f"HTTP {resp.status}")
-                    
-                    # 使用 Pillow 分析尺寸
-                    resolution = "N/A"
-                    if PILImage:
-                        try:
-                            with PILImage.open(img_path) as p_img:
-                                resolution = f"{p_img.width}x{p_img.height}"
-                        except Exception:
-                            pass
-                    print(t("download_success", filename=img_filename, size=format_size(len(img_data)), resolution=resolution))
-                except Exception as img_err:
-                    print(t("download_failed", err=img_err))
+                        # 使用 Pillow 分析尺寸
+                        resolution = "N/A"
+                        if PILImage:
+                            try:
+                                with PILImage.open(img_path) as p_img:
+                                    resolution = f"{p_img.width}x{p_img.height}"
+                            except Exception:
+                                pass
+                        print(t("download_success", filename=img_filename, size=format_size(len(img_data)), resolution=resolution))
+                        success_img = True
+                        break
+                    except Exception as e:
+                        continue
+                        
+                if not success_img:
+                    print(t("download_failed", err="All fallback URLs returned 403 or failed."))
                     
         elif play_addr:
             # 视频下载
