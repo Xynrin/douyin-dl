@@ -382,6 +382,14 @@ def process_single(url, browser, output_base, index, total):
             has_touch=True
         )
         page = context.new_page()
+        
+        # 引入反爬伪装，擦除 WebDriver 指纹
+        try:
+            from playwright_stealth import stealth_sync
+            stealth_sync(page)
+        except ImportError:
+            pass
+            
         page.goto(url, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(3000) # 等待完整渲染与状态注水
         

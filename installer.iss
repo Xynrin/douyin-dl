@@ -37,3 +37,7 @@ Name: "{autodesktop}\MediaDownloader"; Filename: "{app}\MediaDownloader_GUI.exe"
 
 [Run]
 Filename: "{app}\MediaDownloader_GUI.exe"; Description: "启动 MediaDownloader"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "{userprofile}\.cache\ms-playwright"

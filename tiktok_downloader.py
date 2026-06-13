@@ -312,6 +312,12 @@ def process_single(url, browser, output_base, index, total):
 
         page = context.new_page()
 
+        # 引入反爬伪装，擦除 WebDriver 指纹
+        try:
+            from playwright_stealth import stealth_sync
+            stealth_sync(page)
+        except ImportError:
+            pass
         # CDP 注入：隐藏 Playwright 自动化特征，防止被 TikTok 检测
         # 注意：新版 Playwright Python 需要用 context.new_cdp_session(page)
         try:
