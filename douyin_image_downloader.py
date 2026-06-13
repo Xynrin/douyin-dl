@@ -480,9 +480,9 @@ def process_single(url, browser, output_base, index, total):
             raise Exception("Aweme detail node not found in JSON data.")
             
         desc = aweme_detail.get('desc', 'douyin_media').strip()
-        # 清洗文件名安全字符，去掉换行
+        # 清洗文件名安全字符，去掉换行，并限制长度防止过长
         desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc).replace("\n", " ").replace("\r", " ")
-        desc_clean = desc_clean.strip()[:40] or "douyin_media"
+        desc_clean = desc_clean.strip()[:20] or "douyin_media"
         aweme_id = aweme_detail.get('awemeId') or aweme_detail.get('aweme_id')
         if not aweme_id:
             # 尝试从当前重定向后的 URL 提取 ID
@@ -524,13 +524,21 @@ def process_single(url, browser, output_base, index, total):
                 img_filename = f"image_{i}.jpg"
                 img_path = os.path.join(output_dir, img_filename)
                 
+                if os.path.exists(img_path):
+                    print(f"└─ ⏩ 跳过: {img_filename} (文件已存在)")
+                    continue
+                
                 try:
                     # 优先使用 Playwright 下载
                     pw_resp = page.request.get(img_url, headers={"Referer": "https://www.douyin.com/"})
+                    if pw_resp.status != 200:
+                        # 尝试不带 Referer 重试
+                        pw_resp = page.request.get(img_url)
+                        
                     if pw_resp.status == 200:
                         img_data = pw_resp.body()
                     else:
-                        req = urllib.request.Request(img_url, headers=headers)
+                        req = urllib.request.Request(img_url, headers={"User-Agent": headers["User-Agent"]})
                         with urllib.request.urlopen(req) as resp:
                             img_data = resp.read()
                     
@@ -557,38 +565,41 @@ def process_single(url, browser, output_base, index, total):
             filename = f"{aweme_id}_{desc_clean}.mp4"
             filepath = os.path.join(output_base, filename)
             
-            # 尝试通过真实的无水印 API 体系下载视频
-            try:
-                # 尝试从 JSON 提取视频 URI 作为 ID 传入
-                video_node = aweme_detail.get('video') or {}
-                vid = video_node.get('playAddr', [{}])[0].get('uri') or video_node.get('play_addr', {}).get('uri')
-                if not vid:
-                    vid = aweme_id
-                size, res = download_video(vid, filepath)
-                print(t("download_success", filename=filename, size=format_size(size), resolution=res))
-            except Exception as e:
-                import traceback
-                print(f"[DEBUG] 无水印 API 下载失败，准备降级。错误原因:\n{traceback.format_exc()}")
-                # 备用方案：尝试直接提取当前页面的 video src (常含水印，作为兜底)
-                video_element = page.query_selector('video')
-                if video_element:
-                    video_src = video_element.get_attribute('src')
-                    if video_src:
-                        if video_src.startswith('//'):
-                            video_src = 'https:' + video_src
-                        headers = {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                        }
-                        req = urllib.request.Request(video_src, headers=headers)
-                        with urllib.request.urlopen(req) as resp:
-                            video_data = resp.read()
-                            with open(filepath, "wb") as f:
-                                f.write(video_data)
-                        print(t("download_success", filename=filename, size=format_size(len(video_data)), resolution="N/A (Backup CDN)"))
+            if os.path.exists(filepath):
+                print(f"└─ ⏩ 跳过: {filename} (文件已存在)")
+            else:
+                # 尝试通过真实的无水印 API 体系下载视频
+                try:
+                    # 尝试从 JSON 提取视频 URI 作为 ID 传入
+                    video_node = aweme_detail.get('video') or {}
+                    vid = video_node.get('playAddr', [{}])[0].get('uri') or video_node.get('play_addr', {}).get('uri')
+                    if not vid:
+                        vid = aweme_id
+                    size, res = download_video(vid, filepath)
+                    print(t("download_success", filename=filename, size=format_size(size), resolution=res))
+                except Exception as e:
+                    import traceback
+                    print(f"[DEBUG] 无水印 API 下载失败，准备降级。错误原因:\n{traceback.format_exc()}")
+                    # 备用方案：尝试直接提取当前页面的 video src (常含水印，作为兜底)
+                    video_element = page.query_selector('video')
+                    if video_element:
+                        video_src = video_element.get_attribute('src')
+                        if video_src:
+                            if video_src.startswith('//'):
+                                video_src = 'https:' + video_src
+                            headers = {
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            }
+                            req = urllib.request.Request(video_src, headers=headers)
+                            with urllib.request.urlopen(req) as resp:
+                                video_data = resp.read()
+                                with open(filepath, "wb") as f:
+                                    f.write(video_data)
+                            print(t("download_success", filename=filename, size=format_size(len(video_data)), resolution="N/A (Backup CDN)"))
+                        else:
+                            raise Exception("Fallback video element found but has no src attribute.")
                     else:
-                        raise Exception("Fallback video element found but has no src attribute.")
-                else:
-                    raise Exception(f"Video detail download failed and no backup DOM video tag found. Err: {e}")
+                        raise Exception(f"Video detail download failed and no backup DOM video tag found. Err: {e}")
                     
         context.close()
         return True
