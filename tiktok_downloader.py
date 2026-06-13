@@ -299,6 +299,26 @@ def format_size(bytes_size):
         bytes_size /= 1024.0
     return f"{bytes_size:.2f} TB"
 
+def get_next_filename(output_dir, extension):
+    import os
+    import re
+    max_idx = 0
+    if os.path.exists(output_dir):
+        for fname in os.listdir(output_dir):
+            m = re.match(r'^\[(\d+)\](?:image|video)\.\w+$', fname)
+            if m:
+                idx = int(m.group(1))
+                if idx > max_idx:
+                    max_idx = idx
+    
+    next_idx = max_idx + 1
+    prefix = "image" if extension.lower() in ['jpg', 'jpeg', 'png', 'webp'] else "video"
+    while True:
+        candidate = f"[{next_idx}]{prefix}.{extension}"
+        if not os.path.exists(os.path.join(output_dir, candidate)):
+            return candidate
+        next_idx += 1
+
 def process_single(url, browser, output_base, index, total):
     """处理并下载单个 TikTok 链接"""
     print(f"\n[{index}/{total}] {t('parsing')}")
@@ -374,19 +394,17 @@ def process_single(url, browser, output_base, index, total):
             raise Exception("Failed to locate itemStruct in JSON data.")
             
         desc = item.get("desc", "tiktok_media").strip()
-        # 清洗文件名安全字符，去掉换行
+        # 清洗文件名安全字符，去掉换行，并限制长度防止过长
         desc_clean = re.sub(r'[\\/*?:"<>|]', "", desc).replace("\n", " ").replace("\r", " ")
-        desc_clean = desc_clean.strip()[:40] or "tiktok_media"
+        desc_clean = desc_clean.strip()[:20] or "tiktok_media"
         aweme_id = item.get("id")
         if not aweme_id:
             aweme_id = str(int(time.time()))
             
-        # 获取作者信息用于归档
+        # 获取作者信息用于归档 (不再创建子文件夹)
         author_info = item.get("author", {})
         author_name = author_info.get("nickname") or author_info.get("uniqueId") or "Unknown_Author"
         author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).replace("\n", " ").replace("\r", " ").strip()[:30]
-        author_dir = os.path.join(output_base, author_clean)
-        os.makedirs(author_dir, exist_ok=True)
             
         video_info = item.get("video", {})
         play_addr = video_info.get("playAddr")
@@ -399,8 +417,7 @@ def process_single(url, browser, output_base, index, total):
             title_log = t("image_found", title=desc_clean, id=aweme_id, count=len(images))
             print(title_log)
             
-            output_dir = os.path.join(author_dir, f"[图文]_{aweme_id}_{desc_clean}")
-            os.makedirs(output_dir, exist_ok=True)
+            os.makedirs(output_base, exist_ok=True)
             
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -419,11 +436,18 @@ def process_single(url, browser, output_base, index, total):
                 if not img_url:
                     continue
                     
-                img_filename = f"image_{i}.jpg"
-                img_path = os.path.join(output_dir, img_filename)
+                img_filename = get_next_filename(output_base, "jpg")
+                img_path = os.path.join(output_base, img_filename)
+                
+                # 预占位防止循环内重名
+                with open(img_path, "wb") as f:
+                    pass
                 
                 try:
                     resp = page.request.get(img_url, headers={"Referer": "https://www.tiktok.com/"})
+                    if resp.status != 200:
+                        resp = page.request.get(img_url)
+                        
                     if resp.status == 200:
                         img_data = resp.body()
                         with open(img_path, "wb") as f:
@@ -449,8 +473,13 @@ def process_single(url, browser, output_base, index, total):
             print(title_log)
             
             # 确定文件名和保存路径
-            filename = f"[视频]_{aweme_id}_{desc_clean}.mp4"
-            filepath = os.path.join(author_dir, filename)
+            os.makedirs(output_base, exist_ok=True)
+            filename = get_next_filename(output_base, "mp4")
+            filepath = os.path.join(output_base, filename)
+            
+            # 预占位
+            with open(filepath, "wb") as f:
+                pass
             
             # 使用 Playwright page.request 下载直接的 playAddr（不需要水印提取，原始 CDN 无水印）
             resp = page.request.get(play_addr, headers={"Referer": "https://www.tiktok.com/"})

@@ -367,6 +367,26 @@ def download_video(aweme_id: str, filepath: str) -> tuple:
             
     raise last_err or Exception("All video download CDN sources failed.")
 
+def get_next_filename(output_dir, extension):
+    import os
+    import re
+    max_idx = 0
+    if os.path.exists(output_dir):
+        for fname in os.listdir(output_dir):
+            m = re.match(r'^\[(\d+)\](?:image|video)\.\w+$', fname)
+            if m:
+                idx = int(m.group(1))
+                if idx > max_idx:
+                    max_idx = idx
+    
+    next_idx = max_idx + 1
+    prefix = "image" if extension.lower() in ['jpg', 'jpeg', 'png', 'webp'] else "video"
+    while True:
+        candidate = f"[{next_idx}]{prefix}.{extension}"
+        if not os.path.exists(os.path.join(output_dir, candidate)):
+            return candidate
+        next_idx += 1
+
 def process_single(url, browser, output_base, index, total):
     """处理并下载单个抖音链接"""
     print(f"\n[{index}/{total}] {t('parsing')}")
@@ -491,12 +511,10 @@ def process_single(url, browser, output_base, index, total):
         if not aweme_id:
             raise Exception("Failed to parse aweme_id.")
             
-        # 获取作者信息用于归档
+        # 获取作者信息用于归档（不再创建子文件夹，仅做保留）
         author_info = aweme_detail.get('author', {})
         author_name = author_info.get('nickname') or author_info.get('sec_uid') or "Unknown_Author"
         author_clean = re.sub(r'[\\/*?:"<>|]', "", str(author_name)).strip()[:30]
-        author_dir = os.path.join(output_base, author_clean)
-        os.makedirs(author_dir, exist_ok=True)
             
         # 1. 优先提取图文相册
         images = aweme_detail.get('images')
@@ -504,9 +522,8 @@ def process_single(url, browser, output_base, index, total):
             title_log = t("image_found", title=desc_clean, id=aweme_id, count=len(images))
             print(title_log)
             
-            # 创建图文专属存放子目录
-            output_dir = os.path.join(author_dir, f"[图文]_{aweme_id}_{desc_clean}")
-            os.makedirs(output_dir, exist_ok=True)
+            # 不再创建子目录，直接在 output_base
+            os.makedirs(output_base, exist_ok=True)
             
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -521,12 +538,12 @@ def process_single(url, browser, output_base, index, total):
                 if img_url.startswith('//'):
                     img_url = 'https:' + img_url
                     
-                img_filename = f"image_{i}.jpg"
-                img_path = os.path.join(output_dir, img_filename)
+                img_filename = get_next_filename(output_base, "jpg")
+                img_path = os.path.join(output_base, img_filename)
                 
-                if os.path.exists(img_path):
-                    print(f"└─ ⏩ 跳过: {img_filename} (文件已存在)")
-                    continue
+                # 预占位防止循环内重名
+                with open(img_path, "wb") as f:
+                    pass
                 
                 try:
                     # 优先使用 Playwright 下载
@@ -562,13 +579,15 @@ def process_single(url, browser, output_base, index, total):
             title_log = t("video_found", title=desc_clean, id=aweme_id)
             print(title_log)
             
-            filename = f"{aweme_id}_{desc_clean}.mp4"
+            os.makedirs(output_base, exist_ok=True)
+            filename = get_next_filename(output_base, "mp4")
             filepath = os.path.join(output_base, filename)
             
-            if os.path.exists(filepath):
-                print(f"└─ ⏩ 跳过: {filename} (文件已存在)")
-            else:
-                # 尝试通过真实的无水印 API 体系下载视频
+            # 预占位
+            with open(filepath, "wb") as f:
+                pass
+            
+            # 尝试通过真实的无水印 API 体系下载视频
                 try:
                     # 尝试从 JSON 提取视频 URI 作为 ID 传入
                     video_node = aweme_detail.get('video') or {}
