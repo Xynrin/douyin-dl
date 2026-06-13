@@ -27,7 +27,8 @@ jobs:
 
     - name: Build GUI with PyInstaller (OneDir)
       run: |
-        python -m PyInstaller --noconfirm --onedir --noconsole --icon="app.ico" --name "MediaDownloader_GUI" --hidden-import douyin_image_downloader --hidden-import tiktok_downloader --hidden-import auto_updater --hidden-import sv_ttk --collect-all playwright_stealth --collect-all playwright --collect-all PIL --collect-all sv_ttk --clean gui_downloader.py
+        $stealth_path = (python -c "import playwright_stealth, os; print(os.path.dirname(playwright_stealth.__file__))")
+        python -m PyInstaller --noconfirm --onedir --noconsole --icon="app.ico" --name "MediaDownloader_GUI" --hidden-import douyin_image_downloader --hidden-import tiktok_downloader --hidden-import auto_updater --hidden-import sv_ttk --add-data "$stealth_path\js;playwright_stealth\js" --collect-all playwright --collect-all PIL --collect-all sv_ttk --clean gui_downloader.py
 
     - name: Compile Inno Setup Installer
       run: |
@@ -35,11 +36,13 @@ jobs:
 
     - name: Build CLI (Douyin)
       run: |
-        python -m PyInstaller --noconfirm --onefile --name "douyin-dl" --hidden-import douyin_image_downloader --collect-all playwright_stealth --clean douyin_image_downloader.py
+        $stealth_path = (python -c "import playwright_stealth, os; print(os.path.dirname(playwright_stealth.__file__))")
+        python -m PyInstaller --noconfirm --onefile --name "douyin-dl" --hidden-import douyin_image_downloader --add-data "$stealth_path\js;playwright_stealth\js" --clean douyin_image_downloader.py
 
     - name: Build CLI (TikTok)
       run: |
-        python -m PyInstaller --noconfirm --onefile --name "tiktok-dl" --hidden-import tiktok_downloader --collect-all playwright_stealth --clean tiktok_downloader.py
+        $stealth_path = (python -c "import playwright_stealth, os; print(os.path.dirname(playwright_stealth.__file__))")
+        python -m PyInstaller --noconfirm --onefile --name "tiktok-dl" --hidden-import tiktok_downloader --add-data "$stealth_path\js;playwright_stealth\js" --clean tiktok_downloader.py
 
     - name: Compress Setup to ZIP
       run: |
