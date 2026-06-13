@@ -24,6 +24,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller playwright Pillow sv_ttk requests playwright-stealth
+        $env:PLAYWRIGHT_BROWSERS_PATH = "$env:USERPROFILE\.cache\ms-playwright"
         python -m playwright install chromium
         xcopy "$env:USERPROFILE\.cache\ms-playwright" "ms-playwright" /E /H /C /I
 
