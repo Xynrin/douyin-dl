@@ -96,26 +96,46 @@ def _start_download_and_update(root, download_url):
             zip_path = os.path.join(temp_dir, "MediaDownloader_Update.zip")
             setup_path = os.path.join(temp_dir, "MediaDownloader_Setup.exe")
 
+            # 尝试多个下载节点
+            # download_url looks like: https://ghp.ci/https://github.com/Xynrin/tiktok-douyin-dl/releases/download/v1.6.2/MediaDownloader_Windows_Setup.zip
+            raw_url = download_url.replace("https://ghp.ci/", "")
+            urls_to_try = [
+                download_url,
+                raw_url,
+                f"https://ghproxy.net/{raw_url}"
+            ]
             
-            # 使用 urlopen 分块下载并更新进度条
-            req = urllib.request.Request(download_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                total_size = int(resp.getheader('Content-Length', 0))
-                downloaded = 0
-                chunk_size = 8192
-                with open(zip_path, 'wb') as f:
-                    while True:
-                        chunk = resp.read(chunk_size)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            progress = (downloaded / total_size) * 100
-                            def _update_ui(p=progress, d=downloaded, t=total_size):
-                                progress_bar['value'] = p
-                                lbl_progress.config(text=f"{d/1024/1024:.1f} MB / {t/1024/1024:.1f} MB")
-                            root.after(0, _update_ui)
+            success = False
+            last_err = None
+            
+            for d_url in urls_to_try:
+                try:
+                    req = urllib.request.Request(d_url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        total_size = int(resp.getheader('Content-Length', 0))
+                        downloaded = 0
+                        chunk_size = 8192
+                        with open(zip_path, 'wb') as f:
+                            while True:
+                                chunk = resp.read(chunk_size)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                if total_size > 0:
+                                    progress = (downloaded / total_size) * 100
+                                    def _update_ui(p=progress, d=downloaded, t=total_size):
+                                        progress_bar['value'] = p
+                                        lbl_progress.config(text=f"{d/1024/1024:.1f} MB / {t/1024/1024:.1f} MB")
+                                    root.after(0, _update_ui)
+                    success = True
+                    break
+                except Exception as e:
+                    last_err = e
+                    continue
+                    
+            if not success:
+                raise Exception(f"所有下载节点均失败，最后错误: {last_err}")
             
             root.after(0, lambda: lbl_progress.config(text="正在解压..."))
             # 解压 ZIP 文件
@@ -139,12 +159,13 @@ def _start_download_and_update(root, download_url):
             root.after(0, _apply)
 
         except Exception as e:
-            def _err():
+            err_msg = str(e)
+            def _err(msg=err_msg):
                 try:
                     progress_win.destroy()
                 except:
                     pass
-                messagebox.showerror("更新失败", f"下载更新包失败：{e}", parent=root)
+                messagebox.showerror("更新失败", f"下载更新包失败：{msg}", parent=root)
             root.after(0, _err)
             
     threading.Thread(target=_download, daemon=True).start()
